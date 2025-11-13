@@ -708,8 +708,8 @@
 (global-set-key [(control tab)] 'previous-buffer)
 (global-set-key [(control shift tab)] 'next-buffer)
 (global-set-key (kbd "<f3>") 'find-file) ; Open file or dir
-(global-set-key (kbd "<f4>") 'ibuffer) ; list buffers
-(global-set-key (kbd "<f8>") 'menu-bar-mode)
+(global-set-key (kbd "<f4>") 'ibuffer) ; list buffers - список буферов
+(global-set-key (kbd "<f8>") 'menu-bar-mode) ; вызов графического меню
 (global-set-key (kbd "<f2>") 'kill-current-buffer) ; Close file
 ;;
 (defun unfill-paragraph ()
