@@ -703,7 +703,8 @@
 
 (org-babel-do-load-languages
  'org-babel-load-languages
- '((julia . t)))
+ '((julia . t)
+ (shell . t)))
 
 (global-set-key [(control tab)] 'previous-buffer)
 (global-set-key [(control shift tab)] 'next-buffer)
