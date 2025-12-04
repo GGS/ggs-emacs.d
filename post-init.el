@@ -705,7 +705,9 @@
  'org-babel-load-languages
  '((julia . t)
  (shell . t)))
-
+;;
+;;Привязки клавиш
+;;
 (global-set-key [(control tab)] 'previous-buffer)
 (global-set-key [(control shift tab)] 'next-buffer)
 (global-set-key (kbd "<f3>") 'find-file) ; Open file or dir
