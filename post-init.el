@@ -1,5 +1,47 @@
 ;;; post-int.el --- DESCRIPTION -*- no-byte-compile: t; lexical-binding: t; -*-
 ;;
+;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
+;; Ensure adding the following compile-angel code at the very beginning
+;; of your `~/.emacs.d/post-init.el` file, before all other packages.
+;; Нативная компиляция повышает производительность Emacs, преобразуя код Elisp в
+;; машинный код, что приводит к более быстрому выполнению и улучшенной
+;; отзывчивости.
+;;
+;; Убедитесь, что вы добавили следующий код compile-angel в самое начало
+;; вашего файла `~/.emacs.d/post-init.el`, перед всеми остальными пакетами.
+
+(use-package compile-angel
+  :demand t
+  :ensure t
+  :custom
+  ;; Установите `compile-angel-verbose' в nil, чтобы отключить сообщения compile-angel.
+  ;; (Когда установлено в nil, compile-angel не будет показывать, какой файл компилируется.)
+  (compile-angel-verbose t)
+
+  :config
+  ;; Следующая директива предотвращает компиляцию ваших файлов инициализации
+  ;; compile-angel. Если вы решите удалить этот push из `compile-angel-excluded-files'
+  ;; и скомпилировать ваши файлы pre/post-init, убедитесь, что вы понимаете
+  ;; последствия и тщательно тестируете свой код. Например, если вы используете
+  ;; макрос `use-package', вам нужно будет явно добавить:
+  ;; (eval-when-compile (require 'use-package))
+  ;; в начало вашего файла инициализации.
+
+  (push "/init.el" compile-angel-excluded-files)
+  (push "/early-init.el" compile-angel-excluded-files)
+  (push "/pre-init.el" compile-angel-excluded-files)
+  (push "/post-init.el" compile-angel-excluded-files)
+  (push "/pre-early-init.el" compile-angel-excluded-files)
+  (push "/post-early-init.el" compile-angel-excluded-files)
+
+  ;; A local mode that compiles .el files whenever the user saves them.
+  ;; (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
+
+  ;; A global mode that compiles .el files prior to loading them via `load' or
+  ;; `require'. Additionally, it compiles all packages that were loaded before
+  ;; the mode `compile-angel-on-load-mode-compile-once' was activated.
+  (compile-angel-on-load-mode 1))
+;;
 ;; Allow Emacs to upgrade built-in packages, such as Org mode
 (setq package-install-upgrade-built-in t)
 
@@ -124,245 +166,253 @@
   :commands server-start
   :hook
   (after-init . server-start))
-;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
-;; Native compilation enhances Emacs performance by converting Elisp code into
-;; native machine code, resulting in faster execution and improved
-;; responsiveness.
-;;
-;; Ensure adding the following compile-angel code at the very beginning
-;; of your `~/.emacs.d/post-init.el` file, before all other packages.
-(use-package compile-angel
-  :demand t
-  :ensure t
-  :custom
-  ;; Set `compile-angel-verbose` to nil to suppress output from compile-angel.
-  ;; Drawback: The minibuffer will not display compile-angel's actions.
-  (compile-angel-verbose t)
 
-  :config
-  ;; The following directive prevents compile-angel from compiling your init
-  ;; files. If you choose to remove this push to `compile-angel-excluded-files'
-  ;; and compile your pre/post-init files, ensure you understand the
-  ;; implications and thoroughly test your code. For example, if you're using
-  ;; the `use-package' macro, you'll need to explicitly add:
-  ;; (eval-when-compile (require 'use-package))
-  ;; at the top of your init file.
-  (push "/init.el" compile-angel-excluded-files)
-  (push "/early-init.el" compile-angel-excluded-files)
-  (push "/pre-init.el" compile-angel-excluded-files)
-  (push "/post-init.el" compile-angel-excluded-files)
-  (push "/pre-early-init.el" compile-angel-excluded-files)
-  (push "/post-early-init.el" compile-angel-excluded-files)
-
-  ;; A local mode that compiles .el files whenever the user saves them.
-  ;; (add-hook 'emacs-lisp-mode-hook #'compile-angel-on-save-local-mode)
-
-  ;; A global mode that compiles .el files prior to loading them via `load' or
-  ;; `require'. Additionally, it compiles all packages that were loaded before
-  ;; the mode `compile-angel-on-load-mode' was activated.
-  (compile-angel-on-load-mode 1))
-(use-package tomorrow-night-deepblue-theme
-  :ensure t
-  :config
+;(use-package tomorrow-night-deepblue-theme
+;  :ensure t
+;  :config
   ;; Disable all themes and load the Tomorrow Night Deep Blue theme
-  (mapc #'disable-theme custom-enabled-themes)
-  (load-theme 'tomorrow-night-deepblue t))
+;; (mapc #'disable-theme custom-enabled-themes)
+;; (load-theme 'tomorrow-night-deepblue t ))
 ;;
-;; Auto-revert in Emacs is a feature that automatically updates the
-;; contents of a buffer to reflect changes made to the underlying file
-;; on disk.
+;; Auto-revert в Emacs — это функция, которая автоматически обновляет
+;; содержимое буфера для отражения изменений, внесённых в файл на диске.
 (use-package autorevert
   :ensure nil
-  :commands (auto-revert-mode global-auto-revert-mode)
-  :hook
-  (after-init . global-auto-revert-mode)
-  :custom
-  (auto-revert-interval 3)
-  (auto-revert-remote-files nil)
-  (auto-revert-use-notify t)
-  (auto-revert-avoid-polling nil)
-  (auto-revert-verbose t))
+  :init
+  ;; (setq auto-revert-verbose t)
+  (setq auto-revert-interval 3)
+  (setq auto-revert-remote-files nil)
+  (setq auto-revert-use-notify t)
+  (setq auto-revert-avoid-polling nil)
+  :config
+  (global-auto-revert-mode 1))
 
-;; Recentf is an Emacs package that maintains a list of recently
-;; accessed files, making it easier to reopen files you have worked on
-;; recently.
+;; Recentf — это пакет Emacs, который поддерживает список недавно
+;; открытых файлов, упрощая повторное открытие файлов, над которыми вы работали
+;; недавно.
 (use-package recentf
   :ensure nil
-  :commands (recentf-mode recentf-cleanup)
-  :hook
-  (after-init . recentf-mode)
-
-  :custom
-  (recentf-auto-cleanup (if (daemonp) 300 'never))
-  (recentf-exclude
-   (list "\\.tar$" "\\.tbz2$" "\\.tbz$" "\\.tgz$" "\\.bz2$"
-         "\\.bz$" "\\.gz$" "\\.gzip$" "\\.xz$" "\\.zip$"
-         "\\.7z$" "\\.rar$"
-         "COMMIT_EDITMSG\\'"
-         "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
-         "-autoloads\\.el$" "autoload\\.el$"))
+  :init
+  (setq recentf-auto-cleanup (if (daemonp) 300 'never))
+  (setq recentf-exclude
+        (list "\\.tar$" "\\.tbz2$" "\\.tbz$" "\\.tgz$" "\\.bz2$"
+              "\\.bz$" "\\.gz$" "\\.gzip$" "\\.xz$" "\\.zip$"
+              "\\.7z$" "\\.rar$"
+              "COMMIT_EDITMSG\\'"
+              "\\.\\(?:gz\\|gif\\|svg\\|png\\|jpe?g\\|bmp\\|xpm\\)$"
+              "-autoloads\\.el$" "autoload\\.el$"))
 
   :config
-  ;; A cleanup depth of -90 ensures that `recentf-cleanup' runs before
-  ;; `recentf-save-list', allowing stale entries to be removed before the list
-  ;; is saved by `recentf-save-list', which is automatically added to
-  ;; `kill-emacs-hook' by `recentf-mode'.
-  (add-hook 'kill-emacs-hook #'recentf-cleanup -90))
+  ;; Глубина очистки -90 гарантирует, что `recentf-cleanup' выполняется перед
+  ;; `recentf-save-list', позволяя удалить устаревшие записи перед сохранением
+  ;; списка `recentf-save-list', который автоматически добавляется в
+  ;; `kill-emacs-hook' через `recentf-mode'.
+  (add-hook 'kill-emacs-hook #'recentf-cleanup -90)
+  ;; Включение `recentf-mode'
+  (recentf-mode 1))
 
-;; savehist is an Emacs feature that preserves the minibuffer history between
-;; sessions. It saves the history of inputs in the minibuffer, such as commands,
-;; search strings, and other prompts, to a file. This allows users to retain
-;; their minibuffer history across Emacs restarts.
+;; savehist — это функция Emacs, которая сохраняет историю минибуфера между
+;; сессиями. Она сохраняет историю ввода в минибуфере, такую как команды,
+;; строки поиска и другие подсказки, в файл. Это позволяет пользователям
+;; сохранять историю минибуфера при перезапусках Emacs.
 (use-package savehist
   :ensure nil
-  :commands (savehist-mode savehist-save)
-  :hook
-  (after-init . savehist-mode)
-  :custom
-  (savehist-autosave-interval 600)
-  (savehist-additional-variables
-   '(kill-ring                        ; clipboard
-     register-alist                   ; macros
-     mark-ring global-mark-ring       ; marks
-     search-ring regexp-search-ring)))
+  :init
+  (setq history-length 300)
+  (setq savehist-autosave-interval 600)
+  :config
+  (savehist-mode 1))
 
-;; save-place-mode enables Emacs to remember the last location within a file
-;; upon reopening. This feature is particularly beneficial for resuming work at
-;; the precise point where you previously left off.
+;; save-place-mode позволяет Emacs запоминать последнюю позицию в файле
+;; при повторном открытии. Эта функция особенно полезна для возобновления работы
+;; с того места, где вы остановились.
 (use-package saveplace
   :ensure nil
-  :commands (save-place-mode save-place-local-mode)
-  :hook
-  (after-init . save-place-mode)
-  :custom
-  (save-place-limit 400))
-;; Enable `auto-save-mode' to prevent data loss. Use `recover-file' or
-;; `recover-session' to restore unsaved changes.
+  :init
+  (setq save-place-limit 400)
+  :config
+  (save-place-mode 1))
+;;
+;; Включение `auto-save-mode' для предотвращения потери данных. Используйте `recover-file' или
+;; `recover-session' для восстановления несохранённых изменений.
 (setq auto-save-default t)
-
+;; Запуск автосохранения после 300 нажатий клавиш
 (setq auto-save-interval 300)
+;; Запуск автосохранения через 30 секунд бездействия.
 (setq auto-save-timeout 30)
 ;;
-;; When auto-save-visited-mode is enabled, Emacs will auto-save file-visiting
-;; buffers after a certain amount of idle time if the user forgets to save it
-;; with save-buffer or C-x s for example.
+;; Когда auto-save-visited-mode включён, Emacs будет автоматически сохранять буферы,
+;; связанные с файлами, через некоторое время бездействия, если пользователь забыл
+;; сохранить их с помощью save-buffer или C-x s, например.
 ;;
-;; This is different from auto-save-mode: auto-save-mode periodically saves
-;; all modified buffers, creating backup files, including those not associated
-;; with a file, while auto-save-visited-mode only saves file-visiting buffers
-;; after a period of idle time, directly saving to the file itself without
-;; creating backup files.
-(setq auto-save-visited-interval 5)   ; Save after 5 seconds if inactivity
+;; Это отличается от auto-save-mode: auto-save-mode периодически сохраняет
+;; все изменённые буферы, создавая резервные копии, включая те, которые не связаны
+;; с файлом, в то время как auto-save-visited-mode сохраняет только буферы,
+;; связанные с файлами, после периода бездействия, непосредственно сохраняя их
+;; в сам файл без создания резервных копий.
+(setq auto-save-visited-interval 5)   ; Сохранение через 5 секунд бездействия
 (auto-save-visited-mode 1)
 ;;
-;;Автоматическое сохранение сессии. Возможно сохранять под разными именами. 
-;;https://www.jamescherti.com/easysession-el-persist-restore-emacs-session/
+;; Пакет easysession Emacs является менеджером сессий для Emacs, который может сохранять
+;; и восстанавливать буферы редактирования файлов, косвенные буферы/клоны, буферы Dired,
+;; окна/разделения, встроенную панель вкладок (включая вкладки, их буферы и
+;; окна) и фреймы Emacs. Он предлагает удобный и простой способ управления
+;; сессиями редактирования Emacs и использует встроенные функции Emacs для
+;; сохранения и восстановления фреймов.
 (use-package easysession
-  :ensure t
-  :custom
-  (easysession-save-interval (* 10 60))
-  :init
-  (add-hook 'emacs-startup-hook #'easysession-load-including-geometry 98)
-  (add-hook 'emacs-startup-hook #'easysession-save-mode 99))
-;;
-;; Vertico provides a vertical completion interface, making it easier to
-;; navigate and select from completion candidates (e.g., when `M-x` is pressed).
-(use-package vertico
-  ;; (Note: It is recommended to also enable the savehist package.)
-  :ensure t
-  :config
-  (vertico-mode))
+  ;; ':demand t' гарантирует, что пакет загружается немедленно при запуске
+  :demand t
 
-;; Vertico leverages Orderless' flexible matching capabilities, allowing users
-;; to input multiple patterns separated by spaces, which Orderless then
-;; matches in any order against the candidates.
+  :config
+  ;; Привязки клавиш
+  (global-set-key (kbd "C-c sl") #'easysession-switch-to) ; Загрузка сессии
+  (global-set-key (kbd "C-c ss") #'easysession-save) ; Сохранение сессии
+  (global-set-key (kbd "C-c sL") #'easysession-switch-to-and-restore-geometry)
+  (global-set-key (kbd "C-c sr") #'easysession-rename)
+  (global-set-key (kbd "C-c sR") #'easysession-reset)
+  (global-set-key (kbd "C-c su") #'easysession-unload)
+  (global-set-key (kbd "C-c sd") #'easysession-delete)
+
+  ;; Сохранение каждые 10 минут
+  (setq easysession-save-interval (* 10 60))
+
+  ;; Сохранение текущей сессии при использовании `easysession-switch-to'
+  (setq easysession-switch-to-save-session t)
+
+  ;; Не исключать текущую сессию при переключении сессий
+  (setq easysession-switch-to-exclude-current nil)
+
+  ;; Отображать имя активной сессии в индикаторе модельной строки.
+  ;; (setq easysession-save-mode-lighter-show-session-name t)
+
+  ;; Опционально, имя сессии может отображаться в информационной области модельной строки:
+  ;; (setq easysession-mode-line-misc-info t)
+  ;; non-nil: Заставить `easysession-setup' автоматически загружать сессию.
+  ;; (nil: сессия не загружается автоматически; пользователь может загрузить её вручную.)
+  (setq easysession-setup-load-session t)
+
+  ;; Функция `easysession-setup' добавляет хуки:
+  ;; - Для включения автоматической загрузки сессии во время `emacs-startup-hook' или
+  ;;   `server-after-make-frame-hook' при работе в режиме демона.
+  ;; - Для сохранения сессии через регулярные интервалы и при выходе из Emacs.
+  (easysession-setup))
+;;
+;; Vertico предоставляет вертикальный интерфейс дополнения, упрощая
+;; навигацию и выбор кандидатов дополнения (например, при нажатии `M-x').
+(use-package vertico
+  ;; :custom
+  ;; (vertico-scroll-margin 0) ;; Другой отступ прокрутки
+  ;; (vertico-count 20) ;; Показывать больше кандидатов
+  ;; (vertico-resize t) ;; Увеличивать и уменьшать минибуфер Vertico
+  ;; (vertico-cycle t) ;; Включить циклический перебор для `vertico-next/previous'
+  :init
+  (vertico-mode 1))
+
+;; Vertico использует гибкие возможности сопоставления Orderless, позволяя
+;; пользователям вводить несколько шаблонов, разделённых пробелами, которые
+;; Orderless затем сопоставляет в любом порядке с кандидатами.
 (use-package orderless
-  :ensure t
   :custom
   (completion-styles '(orderless basic))
-  (completion-category-defaults nil)
-  (completion-category-overrides '((file (styles partial-completion)))))
+  (completion-category-overrides '((file (styles partial-completion))))
+  ;; Emacs 31: partial-completion ведёт себя как substring
+  (completion-pcm-leading-wildcard t))
 
-;; Marginalia allows Embark to offer you preconfigured actions in more contexts.
-;; In addition to that, Marginalia also enhances Vertico by adding rich
-;; annotations to the completion candidates displayed in Vertico's interface.
+;; Marginalia позволяет Embark предлагать вам предварительно настроенные
+;; действия в большем количестве контекстов. Кроме того, Marginalia также
+;; улучшает Vertico, добавляя богатые аннотации к кандидатам дополнения,
+;; отображаемым в интерфейсе Vertico.
 (use-package marginalia
-  :ensure t
-  :commands (marginalia-mode marginalia-cycle)
-  :hook (after-init . marginalia-mode))
+  ;; Привязка `marginalia-cycle' локально в минибуфере. Чтобы сделать привязку
+  ;; доступной в буфере *Completions*, добавьте её в
+  ;; `completion-list-mode-map'.
+  :bind (:map minibuffer-local-map
+         ("M-A" . marginalia-cycle))
 
-;; Embark integrates with Consult and Vertico to provide context-sensitive
-;; actions and quick access to commands based on the current selection, further
-;; improving user efficiency and workflow within Emacs. Together, they create a
-;; cohesive and powerful environment for managing completions and interactions.
+  ;; Секция :init выполняется всегда.
+  :init
+
+  ;; Marginalia должна быть активирована в секции :init use-package, чтобы
+  ;; режим включался сразу. Обратите внимание, что это принудительно загружает
+  ;; пакет.
+  (marginalia-mode 1))
+
+;; Embark интегрируется с Consult и Vertico, предоставляя контекстно-зависимые
+;; действия и быстрый доступ к командам на основе текущего выбора, что ещё больше
+;; повышает эффективность пользователя и рабочий процесс в Emacs. Вместе они
+;; создают единую среду для управления дополнениями и взаимодействиями.
 (use-package embark
-  ;; Embark is an Emacs package that acts like a context menu, allowing
-  ;; users to perform context-sensitive actions on selected items
-  ;; directly from the completion interface.
-  :ensure t
-  :commands (embark-act
-             embark-dwim
-             embark-export
-             embark-collect
-             embark-bindings
-             embark-prefix-help-command)
   :bind
-  (("C-." . embark-act)         ;; pick some comfortable binding
-   ("C-;" . embark-dwim)        ;; good alternative: M-.
-   ("C-h B" . embark-bindings)) ;; alternative for `describe-bindings'
+  (("C-." . embark-act)         ;; выберите удобную привязку
+   ("C-;" . embark-dwim)        ;; хорошая альтернатива: M-.
+   ("C-h B" . embark-bindings)) ;; альтернатива для `describe-bindings'
 
   :init
+
+  ;; Опционально заменить справку по клавишам на интерфейс completing-read
   (setq prefix-help-command #'embark-prefix-help-command)
 
+  ;; Показывать цель Embark в точке через Eldoc. Вы можете настроить
+  ;; стратегию Eldoc, если хотите видеть документацию от
+  ;; нескольких провайдеров. Имейте в виду, что использование этого может быть
+  ;; немного непривычным, так как сообщение в минибуфере может занимать
+  ;; более одной строки, заставляя модельную строку двигаться вверх и вниз:
+
+  ;; (add-hook 'eldoc-documentation-functions #'embark-eldoc-first-target)
+  ;; (setq eldoc-documentation-strategy #'eldoc-documentation-compose-eagerly)
+
+  ;; Добавить Embark в контекстное меню мыши. Также включите `context-menu-mode'.
+  ;; (context-menu-mode 1)
+  ;; (add-hook 'context-menu-functions #'embark-context-menu 100)
+
   :config
-  ;; Hide the mode line of the Embark live/completions buffers
+  ;; Скрыть модельную строку буферов Embark live/completions
   (add-to-list 'display-buffer-alist
                '("\\`\\*Embark Collect \\(Live\\|Completions\\)\\*"
                  nil
                  (window-parameters (mode-line-format . none)))))
 
-(use-package embark-consult
-  :ensure t
-  :hook
-  (embark-collect-mode . consult-preview-at-point-mode))
+(use-package embark-consult)
 
-;; Consult offers a suite of commands for efficient searching, previewing, and
-;; interacting with buffers, file contents, and more, improving various tasks.
+;; Consult предлагает набор команд для эффективного поиска, предпросмотра и
+;; взаимодействия с буферами, содержимым файлов и другим, улучшая различные задачи.
+
 (use-package consult
-  :ensure t
-  :bind (;; C-c bindings in `mode-specific-map'
+  ;; Замена привязок. Лениво загружается через `use-package'.
+  :bind (;; Привязки C-c в `mode-specific-map'
          ("C-c M-x" . consult-mode-command)
          ("C-c h" . consult-history)
          ("C-c k" . consult-kmacro)
          ("C-c m" . consult-man)
          ("C-c i" . consult-info)
          ([remap Info-search] . consult-info)
-         ;; C-x bindings in `ctl-x-map'
-         ("C-x M-:" . consult-complex-command)
-         ("C-x b" . consult-buffer)
-         ("C-x 4 b" . consult-buffer-other-window)
-         ("C-x 5 b" . consult-buffer-other-frame)
-         ("C-x t b" . consult-buffer-other-tab)
-         ("C-x r b" . consult-bookmark)
-         ("C-x p b" . consult-project-buffer)
-         ;; Custom M-# bindings for fast register access
+         ;; Привязки C-x в `ctl-x-map'
+         ("C-x M-:" . consult-complex-command)     ;; оригинал repeat-complex-command
+         ("C-x b" . consult-buffer)                ;; оригинал switch-to-buffer
+         ("C-x 4 b" . consult-buffer-other-window) ;; оригинал switch-to-buffer-other-window
+         ("C-x 5 b" . consult-buffer-other-frame)  ;; оригинал switch-to-buffer-other-frame
+         ("C-x t b" . consult-buffer-other-tab)    ;; оригинал switch-to-buffer-other-tab
+         ("C-x r b" . consult-bookmark)            ;; оригинал bookmark-jump
+         ("C-x p b" . consult-project-buffer)      ;; оригинал project-switch-to-buffer
+         ;; Пользовательские привязки M-# для быстрого доступа к регистрам
          ("M-#" . consult-register-load)
-         ("M-'" . consult-register-store)
+         ("M-'" . consult-register-store)          ;; оригинал abbrev-prefix-mark (не связан)
          ("C-M-#" . consult-register)
-         ;; Other custom bindings
-         ("M-y" . consult-yank-pop)
-         ;; M-g bindings in `goto-map'
+         ;; Другие пользовательские привязки
+         ("M-y" . consult-yank-pop)                ;; оригинал yank-pop
+         ;; Привязки M-g в `goto-map'
          ("M-g e" . consult-compile-error)
-         ("M-g f" . consult-flymake)
-         ("M-g g" . consult-goto-line)
-         ("M-g M-g" . consult-goto-line)
-         ("M-g o" . consult-outline)
+         ("M-g r" . consult-grep-match)
+         ("M-g f" . consult-flymake)               ;; Альтернатива: consult-flycheck
+         ("M-g g" . consult-goto-line)             ;; оригинал goto-line
+         ("M-g M-g" . consult-goto-line)           ;; оригинал goto-line
+         ("M-g o" . consult-outline)               ;; Альтернатива: consult-org-heading
          ("M-g m" . consult-mark)
          ("M-g k" . consult-global-mark)
          ("M-g i" . consult-imenu)
          ("M-g I" . consult-imenu-multi)
-         ;; M-s bindings in `search-map'
-         ("M-s d" . consult-find)
+         ;; Привязки M-s в `search-map'
+         ("M-s d" . consult-find)                  ;; Альтернатива: consult-fd
          ("M-s c" . consult-locate)
          ("M-s g" . consult-grep)
          ("M-s G" . consult-git-grep)
@@ -371,60 +421,176 @@
          ("M-s L" . consult-line-multi)
          ("M-s k" . consult-keep-lines)
          ("M-s u" . consult-focus-lines)
-         ;; Isearch integration
+         ;; Интеграция с Isearch
          ("M-s e" . consult-isearch-history)
          :map isearch-mode-map
-         ("M-e" . consult-isearch-history)
-         ("M-s e" . consult-isearch-history)
-         ("M-s l" . consult-line)
-         ("M-s L" . consult-line-multi)
-         ;; Minibuffer history
+         ("M-e" . consult-isearch-history)         ;; оригинал isearch-edit-string
+         ("M-s e" . consult-isearch-history)       ;; оригинал isearch-edit-string
+         ("M-s l" . consult-line)                  ;; необходимо для consult-line для обнаружения isearch
+         ("M-s L" . consult-line-multi)            ;; необходимо для consult-line для обнаружения isearch
+         ;; История минибуфера
          :map minibuffer-local-map
-         ("M-s" . consult-history)
-         ("M-r" . consult-history))
+         ("M-s" . consult-history)                 ;; оригинал next-matching-history-element
+         ("M-r" . consult-history))                ;; оригинал previous-matching-history-element
 
-  ;; Enable automatic preview at point in the *Completions* buffer.
-  :hook (completion-list-mode . consult-preview-at-point-mode)
-
+  ;; Конфигурация :init выполняется всегда (не лениво)
   :init
-  ;; Optionally configure the register formatting. This improves the register
-  (setq register-preview-delay 0.5
-        register-preview-function #'consult-register-format)
 
-  ;; Optionally tweak the register preview window.
+  ;; Настройка предпросмотра регистров для `consult-register-load',
+  ;; `consult-register-store' и встроенных команд. Это улучшает
+  ;; форматирование регистров, добавляет тонкие разделительные линии, сортировку
+  ;; регистров и скрывает модельную строку окна.
   (advice-add #'register-preview :override #'consult-register-window)
+  (setq register-preview-delay 0.5)
 
-  ;; Use Consult to select xref locations with preview
+  ;; Использовать Consult для выбора мест xref с предпросмотром
   (setq xref-show-xrefs-function #'consult-xref
         xref-show-definitions-function #'consult-xref)
 
-  ;; Aggressive asynchronous that yield instantaneous results. (suitable for
-  ;; high-performance systems.) Note: Minad, the author of Consult, does not
-  ;; recommend aggressive values.
-  ;; Read: https://github.com/minad/consult/discussions/951
-  ;;
-  ;; However, the author of minimal-emacs.d uses these parameters to achieve
-  ;; immediate feedback from Consult.
-  ;; (setq consult-async-input-debounce 0.02
-  ;;       consult-async-input-throttle 0.05
-  ;;       consult-async-refresh-delay 0.02)
-
+  ;; Настройка других переменных и режимов в секции :config,
+  ;; после ленивой загрузки пакета.
   :config
+
+  ;; Опционально настройте предпросмотр. Значение по умолчанию
+  ;; 'any, так что любая клавиша запускает предпросмотр.
+  ;; (setq consult-preview-key 'any)
+  ;; (setq consult-preview-key "M-.")
+  ;; (setq consult-preview-key '("S-<down>" "S-<up>"))
+  ;; Для некоторых команд и источников буферов полезно настроить
+  ;; :preview-key для каждой команды с помощью макроса `consult-customize'.
   (consult-customize
    consult-theme :preview-key '(:debounce 0.2 any)
-   consult-ripgrep consult-git-grep consult-grep
+   consult-ripgrep consult-git-grep consult-grep consult-man
    consult-bookmark consult-recent-file consult-xref
-   consult--source-bookmark consult--source-file-register
-   consult--source-recent-file consult--source-project-recent-file
+   consult-source-bookmark consult-source-file-register
+   consult-source-recent-file consult-source-project-recent-file
    ;; :preview-key "M-."
    :preview-key '(:debounce 0.4 any))
-  (setq consult-narrow-key "<"))
+
+  ;; Опционально настройте клавишу сужения.
+  ;; < и C-+ работают достаточно хорошо.
+  (setq consult-narrow-key "<") ;; "C-+"
+
+  ;; Опционально сделайте справку по сужению доступной в минибуфере.
+  ;; Вы можете использовать `embark-prefix-help-command' или which-key вместо этого.
+  ;; (keymap-set consult-narrow-map (concat consult-narrow-key " ?") #'consult-narrow-help)
+)
 ;;
+;; Пакет undo-fu является лёгкой обёрткой вокруг встроенной системы отмены
+;; Emacs, предоставляя более удобную функциональность undo/redo.
+(use-package undo-fu
+  :commands (undo-fu-only-undo
+             undo-fu-only-redo
+             undo-fu-only-redo-all
+             undo-fu-disable-checkpoint)
+  :init
+  (global-unset-key (kbd "C-z"))
+  (global-set-key (kbd "C-z") 'undo-fu-only-undo)
+  (global-set-key (kbd "C-S-z") 'undo-fu-only-redo))
+
+;; Пакет undo-fu-session дополняет undo-fu, позволяя сохранять
+;; и восстанавливать историю отмены между сессиями Emacs, даже после перезапуска.
+(use-package undo-fu-session
+  :config
+  (undo-fu-session-global-mode 1))
+;;
+(let ((inhibit-redisplay t))
+  ;; Отключение всех активных тем
+  (mapc #'disable-theme custom-enabled-themes)
+  ;; Загрузка встроенной темы
+  (load-theme 'modus-operandi-tinted t))
+;;
+;; Пакет markdown-mode предоставляет основной режим для Emacs для подсветки
+;; синтаксиса, команд редактирования и поддержки предпросмотра для документов Markdown.
+;; Он поддерживает основной синтаксис Markdown, а также расширения, такие как GitHub Flavored
+;; Markdown (GFM).
+(use-package markdown-mode
+  :commands (gfm-mode
+             gfm-view-mode
+             markdown-mode
+             markdown-view-mode)
+  :mode (("\\.markdown\\'" . markdown-mode)
+         ("\\.md\\'" . markdown-mode)
+         ("README\\.md\\'" . gfm-mode))
+  :bind
+  (:map markdown-mode-map
+        ("C-c C-e" . markdown-do)))
+;;
+;; Автоматическая генерация оглавления при редактировании файлов Markdown
+(use-package markdown-toc
+  :commands (markdown-toc-generate-toc
+             markdown-toc-generate-or-refresh-toc
+             markdown-toc-delete-toc
+             markdown-toc--toc-already-present-p)
+  :custom
+  (markdown-toc-header-toc-title "**Оглавление**"))
+;;
+;; Пакет stripspace Emacs предоставляет stripspace-local-mode — второстепенный
+;; режим, который автоматически удаляет пробелы в конце строк и пустые строки
+;; в конце буфера при сохранении.
+(use-package stripspace
+  :commands stripspace-local-mode
+
+  ;; Включение для prog-mode-hook, text-mode-hook, conf-mode-hook
+  :hook ((prog-mode . stripspace-local-mode)
+         (text-mode . stripspace-local-mode)
+         (conf-mode . stripspace-local-mode))
+
+  :custom
+  ;; Опция `stripspace-only-if-initially-clean':
+  ;; - nil для всегда удаления пробелов в конце строк.
+  ;; - Non-nil для удаления пробелов только когда буфер изначально чист.
+  ;; (Проверка начальной чистоты выполняется при включении
+  ;; `stripspace-local-mode'.)
+  (stripspace-only-if-initially-clean nil)
+
+  ;; Включение `stripspace-restore-column' сохраняет позицию столбца курсора
+  ;; даже после удаления пробелов. Это полезно в сценариях, когда вы добавляете
+  ;; дополнительные пробелы и затем сохраняете файл. Хотя пробелы удаляются
+  ;; в сохранённом файле, курсор остаётся в той же позиции, обеспечивая
+  ;; согласованный опыт редактирования без влияния на размещение курсора.
+  (stripspace-restore-column t))
+;;
+;;Подсветка несохранённых изменений на полях буфера (for example Git)
+(use-package diff-hl
+  :commands (diff-hl-mode
+             global-diff-hl-mode)
+  :hook (prog-mode . diff-hl-mode)
+  :init
+  (setq diff-hl-flydiff-delay 0.4)  ; Быстрее
+  (setq diff-hl-show-staged-changes nil)  ; Обратная связь в реальном времени
+  (setq diff-hl-update-async t)  ; Не блокировать Emacs
+  (setq diff-hl-global-modes '(not pdf-view-mode image-mode)))
+;;
+(use-package buffer-terminator
+  :custom
+  ;; Включение/Отключение подробного режима для регистрации событий очистки буферов
+  (buffer-terminator-verbose nil)
+
+  ;; Установка таймаута бездействия (в секундах), после которого буферы считаются
+  ;; неактивными (по умолчанию 30 минут):
+  (buffer-terminator-inactivity-timeout (* 30 60)) ; 30 минут
+
+  ;; Определение частоты выполнения процесса очистки (по умолчанию каждые 10
+  ;; минут):
+  (buffer-terminator-interval (* 10 60)) ; 10 минут
+
+  :config
+  (buffer-terminator-mode 1))
 ;;
 ;; Read ePub files
   (use-package nov
     :init
     (add-to-list 'auto-mode-alist '("\\.epub\\'" . nov-mode)))
+;;
+;; Быстрый переход в видимом тексте с минимальным нажатием клавиш (по 2 символам)
+(use-package avy
+  :commands (avy-goto-char
+             avy-goto-char-2
+             avy-next)
+  :init
+  (global-set-key (kbd "C-'") 'avy-goto-char-2))
+
 ;;
 ;; Org mode is a major mode designed for organizing notes, planning, task
 ;; management, and authoring documents using plain text with a simple and
@@ -447,8 +613,13 @@
   ;; (org-fontify-quote-and-verse-blocks t)
   (org-todo-keywords
    '((sequence "TODO(t)" "NEXT(n)" "WAITING(w)" "|" "DONE(d)" "CANCELLED(c)")))
-    
+
   (org-startup-truncated t))
+
+(use-package org-appear
+  :commands org-appear-mode
+  :hook (org-mode . org-appear-mode))
+
 ;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;;
 ;; Function: (my-org-insert-heading-respect-content-and-prepend-todo)
 ;; Author: James Cherti
@@ -536,7 +707,7 @@
 ;; Denote
 (use-package denote
   :init
-  (require 'denote-org-extras)
+  ;(require 'denote-org-extras)
   (denote-rename-buffer-mode 1)
 ;  :custom
 ;  (denote-directory ews-notes-directory)
@@ -570,7 +741,7 @@
         (org-modern-keyword nil)
         (org-modern-checkbox nil)
         (org-modern-table nil)
-        (org-modern-star 'fold))   
+        (org-modern-star 'fold))
 
     ; Minimal UI
 
@@ -685,7 +856,7 @@
   :custom
   (markdown-toc-header-toc-title "**Table of Contents**"))
 ;;
-;;    
+;;
 ;; Поддержка Julia и прочих языков
 ;;
 ;; Tree-sitter in Emacs is an incremental parsing system introduced in Emacs 29
@@ -735,41 +906,117 @@
 (global-set-key (kbd "C-c f u") 'unfill-paragraph)
 
 ;;Vi mode
-(require 'evil)
-(evil-mode 1) 
-;;Страницы в стиле vi
+;; Раскомментируйте следующее, если вы используете undo-fu
+(setq evil-undo-system 'undo-fu)
+
+;; Эмуляция Vim
+(use-package evil
+  :init
+  ;; Должно быть определено до evil
+  (setq evil-want-integration t)
+  (setq evil-want-keybinding nil)
+
+  :custom
+  ;; Сделать :s в визуальном режиме работающим только для фактического
+  ;; визуального выделения (символ или блок), вместо полных строк, покрытых выделением
+  (evil-ex-visual-char-range t)
+  ;; Использовать регулярные выражения в стиле Vim в командах поиска и замены,
+  ;; позволяя такие возможности, как \v (very magic), \zs и \ze для точных совпадений
+  (evil-ex-search-vim-style-regexp t)
+  ;; Включить автоматическое горизонтальное разделение снизу
+  (evil-split-window-below t)
+  ;; Включить автоматическое вертикальное разделение справа
+  (evil-vsplit-window-right t)
+  ;; Отключить вывод состояния Evil, чтобы не заменять eldoc
+  (evil-echo-state nil)
+  ;; Не перемещать курсор назад при выходе из режима вставки
+  (evil-move-cursor-back nil)
+  ;; Сделать `v$` исключающим последний перевод строки
+  (evil-v$-excludes-newline t)
+  ;; Разрешить C-h удалять в режиме вставки
+  (evil-want-C-h-delete t)
+  ;; Включить C-u для удаления до отступа в режиме вставки
+  (evil-want-C-u-delete t)
+  ;; Включить детальное поведение отмены
+  (evil-want-fine-undo t)
+  ;; Отключить обёртывание поиска вокруг буфера
+  (evil-search-wrap nil)
+  ;; Будет ли Y копировать до конца строки
+  (evil-want-Y-yank-to-eol t)
+
+  :config
+  (evil-mode 1))
+
+(use-package evil-collection
+  :after evil
+  :init
+  ;; Должно быть определено до evil-collection
+  (setq evil-collection-setup-minibuffer t)
+  :config
+  (evil-collection-init))
+
+;; Пакет goto-chg полезен с Evil для перехода непосредственно к самому последнему
+;; месту редактирования. Это отражает навигацию по изменениям Vim, позволяя быстро
+;; возвращаться к тому месту, где текст был изменён, без использования списка переходов
+;; или поиска.
+;;
+;; Команды goto-chg привязаны к g; и g,
+(use-package goto-chg
+  :commands (goto-last-change
+             goto-last-change-reverse))
+
+;; Придать панели вкладок Emacs стиль, похожий на Vim
 (use-package vim-tab-bar
-  :ensure t
-  :commands vim-tab-bar-mode
-  :hook
-  (after-init . vim-tab-bar-mode))
+  :config
+  (vim-tab-bar-mode 1))
+;;
+;; Пакет evil-surround упрощает работу с окружающими символами, такими как
+;; скобки, кавычки и т.д. Он предоставляет привязки клавиш для лёгкого добавления,
+;; изменения или удаления этих окружающих символов парами. Например, вы
+;; можете окружить выделенный текст двойными кавычками в визуальном состоянии
+;; с помощью S" или gS".
+(use-package evil-surround
+  :after evil
+  :custom
+  (evil-surround-pairs-alist
+   '((?\( . ("(" . ")"))
+     (?\[ . ("[" . "]"))
+     (?\{ . ("{" . "}"))
+
+     (?\) . ("(" . ")"))
+     (?\] . ("[" . "]"))
+     (?\} . ("{" . "}"))
+
+     (?< . ("<" . ">"))
+     (?> . ("<" . ">"))))
+  :config
+  (global-evil-surround-mode 1))
 ;;
 ;;Evil-org mode для работы с фолдингом в Vim режиме
-;; https://github.com/Somelauw/evil-org-mode 
+;; https://github.com/Somelauw/evil-org-mode
 ;;(use-package evil-org
 ;;  :ensure t
 ;;  :after org
 ;;  :hook (org-mode . (lambda () evil-org-mode))
-;;  :config
+;; :config
 ;;  (require 'evil-org-agenda)
 ;;  (evil-org-agenda-set-keys))
-(require 'evil-org)
-(add-hook 'org-mode-hook 'evil-org-mode)
-(evil-org-set-key-theme '(navigation insert textobjects additional calendar))
-(require 'evil-org-agenda)
-(evil-org-agenda-set-keys)
+;;
+;;
+;;(require 'evil-org-agenda)
+;;(evil-org-agenda-set-keys)
 ;;
 ;; Локализация календаря
 (setq calendar-week-start-day 1
-          calendar-day-name-array ["Воскресенье" "Понедельник" "Вторник" "Среда" 
+          calendar-day-name-array ["Воскресенье" "Понедельник" "Вторник" "Среда"
                                    "Четверг" "Пятница" "Суббота"]
           calendar-day-header-array ["Вс" "Пн" "Вт" "Ср" "Чт" "Пт" "Сб"]
           calendar-day-abbrev-array ["Вск" "Пнд" "Втр" "Срд" "Чтв" "Птн" "Суб"]
-          calendar-month-name-array ["Январь" "Февраль" "Март" "Апрель" "Май" 
+          calendar-month-name-array ["Январь" "Февраль" "Март" "Апрель" "Май"
                                      "Июнь" "Июль" "Август" "Сентябрь"
                                      "Октябрь" "Ноябрь" "Декабрь"]
           calendar-month-abbrev-array ["Янв" "Фев" "Мар" "Апр" "Май" "Июн" "Июл" "Авг" "Сен" "Окт" "Ноя" "Дек"])
 ;;
-
+;;
 ;;emacs --init-directory ~/.config/emacs/
 ;;
