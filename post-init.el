@@ -45,21 +45,33 @@
 ;; Allow Emacs to upgrade built-in packages, such as Org mode
 (setq package-install-upgrade-built-in t)
 
-;; When Delete Selection mode is enabled, typed text replaces the selection
-;; if the selection is active.
+
+;;; Включение автоматической вставки и управления парными символами
+;;; (например, (), {}, "") глобально с помощью `electric-pair-mode'.
+(use-package elec-pair
+  :ensure nil
+  :config
+  (electric-pair-mode 1))
+
+;; Установка полей в соответствии с высотой пикселя символа. Это гарантирует,
+;; что поле достаточно широкое, масштабируясь динамически с текущим размером шрифта.
+(fringe-mode (frame-char-width))
+
+;; Когда режим Delete Selection включён, вводимый текст заменяет выделение,
+;; если выделение активно.
 (delete-selection-mode 1)
 
-;; Display the current line and column numbers in the mode line
+;; Отображение текущих номеров строки и столбца в модельной строке
 (setq line-number-mode t)
 (setq column-number-mode t)
 (setq mode-line-position-column-line-format '("%l:%C"))
 
-;; Display of line numbers in the buffer:
+;; Отображение номеров строк в буфере:
 (setq-default display-line-numbers-type 'relative)
 (dolist (hook '(prog-mode-hook text-mode-hook conf-mode-hook))
   (add-hook hook #'display-line-numbers-mode))
 
-;; Set the maximum level of syntax highlighting for Tree-sitter modes
+;; Установка максимального уровня подсветки синтаксиса для режимов Tree-sitter
 (setq treesit-font-lock-level 4)
 
 (use-package which-key
@@ -74,24 +86,39 @@
 
 (unless (and (eq window-system 'mac)
              (bound-and-true-p mac-carbon-version-string))
-  ;; Enables `pixel-scroll-precision-mode' on all operating systems and Emacs
-  ;; versions, except for emacs-mac.
-  ;;
-  ;; Enabling `pixel-scroll-precision-mode' is unnecessary with emacs-mac, as
-  ;; this version of Emacs natively supports smooth scrolling.
-  ;; https://bitbucket.org/mituharu/emacs-mac/commits/65c6c96f27afa446df6f9d8eff63f9cc012cc738
-  (setq pixel-scroll-precision-use-momentum nil) ; Precise/smoother scrolling
-  (pixel-scroll-precision-mode 1))
+;; Enables `pixel-scroll-precision-mode' on all operating systems and Emacs
+;; versions, except for emacs-mac.
+;;
+;; Enabling `pixel-scroll-precision-mode' is unnecessary with emacs-mac, as
+;; this version of Emacs natively supports smooth scrolling.
+;; https://bitbucket.org/mituharu/emacs-mac/commits/65c6c96f27afa446df6f9d8eff63f9cc012cc738
+(setq pixel-scroll-precision-use-momentum nil) ; Precise/smoother scrolling
+(pixel-scroll-precision-mode 1))
 
-;; Display the time in the modeline
-(add-hook 'after-init-hook #'display-time-mode)
+;;Отображение времени в модельной строке
+(display-time-mode 1)
 
-;; Paren match highlighting
-(add-hook 'after-init-hook #'show-paren-mode)
+;; Подсветка парных скобок
+(show-paren-mode 1)
 
-;; Track changes in the window configuration, allowing undoing actions such as
-;; closing windows.
-(add-hook 'after-init-hook #'winner-mode)
+;; Отслеживание изменений в конфигурации окон, позволяя отменять такие действия,
+;; как закрытие окон.
+(setq winner-boring-buffers '("*Completions*"
+                                "*Minibuf-0*"
+                                "*Minibuf-1*"
+                                "*Minibuf-2*"
+                                "*Minibuf-3*"
+                                "*Minibuf-4*"
+                                "*Compile-Log*"
+                                "*inferior-lisp*"
+                                "*Fuzzy Completions*"
+                                "*Apropos*"
+                                "*Help*"
+                                "*cvs*"
+                                "*Buffer List*"
+                                "*Ibuffer*"
+                                "*esh command on file*"))
+(winner-mode 1)
 
 (use-package uniquify
   :ensure nil
@@ -100,13 +127,13 @@
   (uniquify-separator "•")
   (uniquify-after-kill-buffer-p t))
 
-;; Window dividers separate windows visually. Window dividers are bars that can
-;; be dragged with the mouse, thus allowing you to easily resize adjacent
-;; windows.
+;; Разделители окон визуально отделяют окна. Разделители окон — это полосы,
+;; которые можно перетаскивать мышью, что позволяет легко изменять размер
+;; соседних окон.
 ;; https://www.gnu.org/software/emacs/manual/html_node/emacs/Window-Dividers.html
-(add-hook 'after-init-hook #'window-divider-mode)
+(window-divider-mode 1)
 
-;; Constrain vertical cursor movement to lines within the buffer
+;; Ограничить вертикальное движение курсора строками в пределах буфера
 (setq dired-movement-style 'bounded-files)
 
 ;; Dired buffers: Automatically hide file details (permissions, size,
@@ -149,24 +176,45 @@
 (setq kept-old-versions 10)
 (setq kept-new-versions 10)
 
-;; When tooltip-mode is enabled, certain UI elements (e.g., help text,
-;; mouse-hover hints) will appear as native system tooltips (pop-up windows),
-;; rather than as echo area messages. This is useful in graphical Emacs sessions
-;; where tooltips can appear near the cursor.
-(setq tooltip-hide-delay 20)    ; Time in seconds before a tooltip disappears (default: 10)
-(setq tooltip-delay 0.4)        ; Delay before showing a tooltip after mouse hover (default: 0.7)
-(setq tooltip-short-delay 0.08) ; Delay before showing a short tooltip (Default: 0.1)
+;; Когда tooltip-mode включён, определённые элементы интерфейса (например, текст
+;; справки, подсказки при наведении мыши) будут отображаться как собственные
+;; системные подсказки (всплывающие окна), а не как сообщения в области эхо.
+;; Это полезно в графических сессиях Emacs, где подсказки могут появляться
+;; рядом с курсором.
+(setq tooltip-hide-delay 20)    ; Время в секундах до исчезновения подсказки (по умолчанию: 10)
+(setq tooltip-delay 0.4)        ; Задержка перед показом подсказки после наведения мыши (по умолчанию: 0.7)
+(setq tooltip-short-delay 0.08) ; Задержка перед показом короткой подсказки (по умолчанию: 0.1)
 (tooltip-mode 1)
 
-;; Configure the built-in Emacs server to start after initialization,
-;; allowing the use of the emacsclient command to open files in the
-;; current session.
+;; Сохранять неизменённые буферы A/B/C в конце сессии
+(setq ediff-keep-variants t)
+
+;; Автоматически применять проверенные, безопасные файлово-локальные переменные.
+;; Это устраняет запросы подтверждения при загрузке файлов, гарантируя, что
+;; несанкционированные или рискованные конфигурации молча игнорируются.
+(setq enable-local-variables :safe)
+
+;; Сервер Emacs позволяет внешним программам, таким как `emacsclient', подключаться
+;; к одному запущенному экземпляру Emacs. Это позволяет открывать файлы в
+;; существующей сессии вместо запуска нового процесса Emacs каждый раз.
+;;
+;; После запуска сервера команда `emacsclient' может использоваться в
+;; терминале для открытия файлов в активной сессии Emacs. Например, выполнение
+;; следующей команды открывает файл в существующем фрейме Emacs без блокировки
+;; процесса терминала.
+;;   emacsclient -n filename.txt
+;;
 (use-package server
   :ensure nil
-  :commands server-start
-  :hook
-  (after-init . server-start))
-
+  :if (not (daemonp))
+  :preface
+  (defun my-server-start ()
+    "Запустить сервер Emacs, если в данный момент нет активного процесса сервера."
+    (unless (server-running-p)
+      (server-start)))
+  :config
+  (my-server-start))
+;;
 ;(use-package tomorrow-night-deepblue-theme
 ;  :ensure t
 ;  :config
@@ -253,6 +301,30 @@
 (setq auto-save-visited-interval 5)   ; Сохранение через 5 секунд бездействия
 (auto-save-visited-mode 1)
 ;;
+(use-package buffer-guardian
+  :custom
+  ;; Когда non-nil, включать удалённые файлы в процесс автосохранения
+  (buffer-guardian-inhibit-saving-remote-files t)
+
+  ;; Когда non-nil, буферы, посещающие несуществующие файлы, не сохраняются
+  (buffer-guardian-inhibit-saving-nonexistent-files nil)
+
+  ;; Сохранять буфер, даже если изменение окна приводит к тому же буферу
+  (buffer-guardian-save-on-same-buffer-window-change t)
+
+  ;; Non-nil для включения подробного режима для регистрации, когда буфер
+  ;; автоматически сохраняется
+  (buffer-guardian-verbose nil)
+
+  ;; Сохранять все буферы через N секунд бездействия пользователя. (Отключено по умолчанию)
+  ;; (buffer-guardian-save-all-buffers-idle 30)
+
+  ;; Сохранять все буферы каждые N секунд. (Отключено по умолчанию)
+  ;; (setq buffer-guardian-save-all-buffers-interval (* 60 30))
+
+  :config
+  (buffer-guardian-mode 1))
+
 ;; Пакет easysession Emacs является менеджером сессий для Emacs, который может сохранять
 ;; и восстанавливать буферы редактирования файлов, косвенные буферы/клоны, буферы Dired,
 ;; окна/разделения, встроенную панель вкладок (включая вкладки, их буферы и
@@ -590,7 +662,46 @@
              avy-next)
   :init
   (global-set-key (kbd "C-'") 'avy-goto-char-2))
+;;
+;; `vterm' — это эмулятор терминала для Emacs, который обеспечивает полностью
+;; интерактивный опыт работы с оболочкой в Emacs, поддерживая такие функции,
+;; как цвет, движение курсора и расширенные возможности терминала. В отличие
+;; от стандартных терминальных режимов Emacs, `vterm' использует библиотеку
+;; libvterm на C для высокопроизводительной эмуляции. Это обеспечивает
+;; точное поведение терминала при запуске программ оболочки, текстовых
+;; приложений и REPL.
+(use-package vterm
+  :if (bound-and-true-p module-file-suffix)
+  :commands (vterm
+             vterm-send-string
+             vterm-send-return
+             vterm-send-key
+             vterm-module-compile)
 
+  :preface
+  (when noninteractive
+    ;; vterm ненужно запускает компиляцию vterm-module.so при загрузке.
+    ;; Это предотвращает это во время байт-компиляции (`use-package' принудительно
+    ;; загружает пакеты при компиляции).
+    (advice-add #'vterm-module-compile :override #'ignore))
+
+  (defun my-vterm--setup ()
+    ;; Скрыть модельную строку
+    (setq mode-line-format nil)
+
+    ;; Предотвратить раннюю горизонтальную прокрутку
+    (setq-local hscroll-margin 0)
+
+    ;; Подавить запросы на завершение активных процессов при закрытии vterm
+    (setq-local confirm-kill-processes nil))
+
+  :init
+  (add-hook 'vterm-mode-hook #'my-vterm--setup)
+
+  (setq vterm-timer-delay 0.05)  ; Более быстрый vterm
+  (setq vterm-kill-buffer-on-exit t)
+  (setq vterm-max-scrollback 5000))
+;;
 ;;
 ;; Org mode is a major mode designed for organizing notes, planning, task
 ;; management, and authoring documents using plain text with a simple and
@@ -705,14 +816,15 @@
         (file+headline org-default-notes-file "Задачи")
         "* TODO %i%?"))))
 ;; Denote
+;; Помните, что версия этого руководства на сайте показывает последние
+;; разработки, которые могут быть недоступны в используемом вами пакете.
+;; Вместо копирования с веб-сайта обратитесь к версии документации,
+;; поставляемой с вашим пакетом. Выполните:
+;;
+;;     (info "(denote) Sample configuration")
 (use-package denote
-  :init
-  ;(require 'denote-org-extras)
-  (denote-rename-buffer-mode 1)
-;  :custom
-;  (denote-directory ews-notes-directory)
-  :hook
-  (dired-mode . denote-dired-mode)
+  :ensure t
+  :hook (dired-mode . denote-dired-mode)
   :bind
   (("C-c n n" . denote)
    ("C-c n r" . denote-rename-file)
@@ -720,17 +832,24 @@
    ("C-c n b" . denote-backlinks)
    ("C-c n d" . denote-dired)
    ("C-c n g" . denote-grep))
+  :config
+  (setq denote-directory (expand-file-name ews-notes-directory))
   :custom-face
   (denote-faces-link ((t (:slant italic)))))
+
+;; Автоматически переименовывать буферы Denote при их открытии, чтобы
+;; вместо длинного имени файла они имели, например, литеральный
+;; "[D]", за которым следует заголовок файла. Прочитайте строку документации
+;; `denote-rename-buffer-format', чтобы узнать, как это изменить.
+(denote-rename-buffer-mode 1)
 
 ;; Denote extensions
 (use-package consult-notes
   :commands (consult-notes
              consult-notes-search-in-all-notes)
-;  :custom
-;  (consult-notes-file-dir-sources
-                                        ;  `(("Denote" ?d ,ews-notes-directory)))
-  )
+  :custom
+  (consult-notes-file-dir-sources
+   `(("Denote" ?d ,ews-notes-directory))))
 ;;
 ;; Украшение орг моды (знаки, символы)
 ;;
@@ -743,54 +862,57 @@
         (org-modern-table nil)
         (org-modern-star 'fold))
 
-    ; Minimal UI
-
-    ;;(modus-themes-load-operandi)
-
-;; Choose some fonts
+    ;; Choose some fonts
     (set-face-attribute 'default nil :height 140)
-    (set-face-attribute 'default nil :family "Iosevka")
+    (set-face-attribute 'default nil :family "Iosevka Term")
     (set-face-attribute 'variable-pitch nil :family "Iosevka Aile")
-    ;(set-face-attribute 'org-modern-symbol nil :family "Iosevka")
+    ;;(set-face-attribute 'org-modern-symbol nil :family "Iosevka Term")
+;;
+(use-package persist-text-scale
+  :custom
+  (text-scale-mode-step 1.07)
 
-    ;; Add frame borders and window dividers
-    (modify-all-frames-parameters
-     '((right-divider-width . 40)
-       (internal-border-width . 40)))
+  :config
+  (persist-text-scale-mode 1))
+;;
+;; Add frame borders and window dividers
+(modify-all-frames-parameters
+ '((right-divider-width . 40)
+   (internal-border-width . 40)))
     (dolist (face '(window-divider
                     window-divider-first-pixel
                     window-divider-last-pixel))
       (face-spec-reset-face face)
       (set-face-foreground face (face-attribute 'default :background)))
-    (set-face-background 'fringe (face-attribute 'default :background))
+(set-face-background 'fringe (face-attribute 'default :background))
 
-    (setq
-     ;; Edit settings
-     org-auto-align-tags nil
-     org-tags-column 0
-     org-catch-invisible-edits 'show-and-error
-     org-special-ctrl-a/e t
-     org-insert-heading-respect-content t
+(setq
+ ;; Edit settings
+ org-auto-align-tags nil
+ org-tags-column 0
+ org-catch-invisible-edits 'show-and-error
+ org-special-ctrl-a/e t
+ org-insert-heading-respect-content t
 
-     ;; Org styling, hide markup etc.
-     org-hide-emphasis-markers t
-     org-pretty-entities t
+;; Org styling, hide markup etc.
+ org-hide-emphasis-markers t
+ org-pretty-entities t
 
-     ;; Agenda styling
-     org-agenda-tags-column 0
-     org-agenda-block-separator ?─
-     org-agenda-time-grid
-     '((daily today require-timed)
-       (800 1000 1200 1400 1600 1800 2000)
-       " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
-     org-agenda-current-time-string
-     "◀── now ─────────────────────────────────────────────────")
+ ;; Agenda styling
+ org-agenda-tags-column 0
+ org-agenda-block-separator ?─
+ org-agenda-time-grid
+ '((daily today require-timed)
+   (800 1000 1200 1400 1600 1800 2000)
+   " ┄┄┄┄┄ " "┄┄┄┄┄┄┄┄┄┄┄┄┄┄┄")
+ org-agenda-current-time-string
+ "◀── now ─────────────────────────────────────────────────")
 
-    ;; Ellipsis styling
-    (setq org-ellipsis "…")
-    (set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
+;; Ellipsis styling
+(setq org-ellipsis "…")
+(set-face-attribute 'org-ellipsis nil :inherit 'default :box nil)
 
-    (global-org-modern-mode)
+(global-org-modern-mode)
 ;;
 ;; Auto completion
 ;;
