@@ -702,6 +702,14 @@
   (setq vterm-kill-buffer-on-exit t)
   (setq vterm-max-scrollback 5000))
 ;;
+;;TMR установка таймера
+(use-package tmr
+  :ensure t
+  :config
+  (define-key global-map (kbd "C-c t") #'tmr-prefix-map)
+  (setq tmr-sound-file "/usr/share/sounds/freedesktop/stereo/alarm-clock-elapsed.oga"
+        tmr-notification-urgency 'normal
+        tmr-description-list 'tmr-description-history))
 ;;
 ;; Org mode is a major mode designed for organizing notes, planning, task
 ;; management, and authoring documents using plain text with a simple and
@@ -805,6 +813,11 @@
      '(("f" "Fleeting note" item
         (file+headline org-default-notes-file "Заметки")
         "- %?")
+       ("j" "Journal" entry
+        (file denote-journal-path-to-new-or-existing-entry)
+        "* %U %?\n%i\n%a"
+        :kill-buffer t
+        :empty-lines 1)
        ("p" "Permanent note" plain
         (file denote-last-path)
         #'denote-org-capture
@@ -844,6 +857,14 @@
 (denote-rename-buffer-mode 1)
 
 ;; Denote extensions
+(use-package consult-denote
+  :ensure t
+  :bind
+  (("C-c n f" . consult-denote-find)
+   ("C-c n g" . consult-denote-grep))
+  :config
+  (consult-denote-mode 1))
+;;
 (use-package consult-notes
   :commands (consult-notes
              consult-notes-search-in-all-notes)
@@ -851,6 +872,23 @@
   (consult-notes-file-dir-sources
    `(("Denote" ?d ,ews-notes-directory))))
 ;;
+(use-package denote-journal
+  :ensure t
+  ;; Bind those to some key for your convenience.
+  :commands ( denote-journal-new-entry
+              denote-journal-new-or-existing-entry
+              denote-journal-link-or-create-entry )
+  :hook (calendar-mode . denote-journal-calendar-mode)
+  :config
+  ;; Use the "journal" subdirectory of the `denote-directory'.  Set this
+  ;; to nil to use the `denote-directory' instead.
+  (setq denote-journal-directory
+        (expand-file-name "journal" ews-notes-directory))
+  ;; Default keyword for new journal entries. It can also be a list of
+  ;; strings.
+  (setq denote-journal-keyword "journal")
+  ;; Read the doc string of `denote-journal-title-format'.
+  (setq denote-journal-title-format 'day-date-month-year))
 ;; Украшение орг моды (знаки, символы)
 ;;
  (use-package org-modern
@@ -916,38 +954,36 @@
 ;;
 ;; Auto completion
 ;;
-;; Corfu enhances in-buffer completion by displaying a compact popup with
-;; current candidates, positioned either below or above the point. Candidates
-;; can be selected by navigating up or down.
+ ; Enable Corfu
+ ;; Corfu улучшает дополнение в буфере, отображая компактное всплывающее окно с
+;; текущими кандидатами, расположенное ниже или выше точки. Кандидаты
+;; можно выбирать, перемещаясь вверх или вниз.
 (use-package corfu
-  :ensure t
-  :commands (corfu-mode global-corfu-mode)
-
-  :hook ((prog-mode . corfu-mode)
-         (shell-mode . corfu-mode)
-         (eshell-mode . corfu-mode))
-
+;; :ensure t
+;  :commands (corfu-mode global-corfu-mode)
+    ;;:hook (shell-mode . (lambda () (add-hook 'completion-at-point-functions
+    ;;                                        #'cape-history nil t)))
+    ;;         (prog-mode . corfu-mode)
+    ;;         (shell-mode . corfu-mode)
+    ;;         (eshell-mode . corfu-mode))
   :custom
-  ;; Hide commands in M-x which do not apply to the current mode.
+  ;; Скрывать команды в M-x, которые не применяются к текущему режиму.
   (read-extended-command-predicate #'command-completion-default-include-p)
-  ;; Disable Ispell completion function. As an alternative try `cape-dict'.
+  ;; Отключить функцию дополнения Ispell. В качестве альтернативы попробуйте `cape-dict'.
   (text-mode-ispell-word-completion nil)
   (tab-always-indent 'complete)
-
-  ;; Enable Corfu
+  ;; Включение Corfu
   :config
   (global-corfu-mode))
-
-;; Cape, or Completion At Point Extensions, extends the capabilities of
-;; in-buffer completion. It integrates with Corfu or the default completion UI,
-;; by providing additional backends through completion-at-point-functions.
+;; Cape, или Completion At Point Extensions, расширяет возможности
+;; дополнения в буфере. Он интегрируется с Corfu или стандартным интерфейсом
+;; дополнения, предоставляя дополнительные бэкенды через completion-at-point-functions.
 (use-package cape
-  :ensure t
   :commands (cape-dabbrev cape-file cape-elisp-block)
   :bind ("C-c p" . cape-prefix-map)
   :init
-  ;; Add to the global default value of `completion-at-point-functions' which is
-  ;; used by `completion-at-point'.
+  ;; Добавление в глобальное значение по умолчанию `completion-at-point-functions',
+  ;; которое используется `completion-at-point'.
   (add-hook 'completion-at-point-functions #'cape-dabbrev)
   (add-hook 'completion-at-point-functions #'cape-file)
   (add-hook 'completion-at-point-functions #'cape-elisp-block))
@@ -1139,6 +1175,54 @@
                                      "Октябрь" "Ноябрь" "Декабрь"]
           calendar-month-abbrev-array ["Янв" "Фев" "Мар" "Апр" "Май" "Июн" "Июл" "Авг" "Сен" "Окт" "Ноя" "Дек"])
 ;;
+;;
+;; Официальная коллекция сниппетов для yasnippet.
+(use-package yasnippet-snippets
+  :after yasnippet)
+
+;; YASnippet — это система шаблонов, которая улучшает редактирование текста,
+;; позволяя пользователям определять и использовать сниппеты. Когда пользователь
+;; вводит короткую аббревиатуру, YASnippet автоматически расширяет её в полный
+;; шаблон, который может включать заполнители, поля и динамическое содержимое.
+(use-package yasnippet
+  :custom
+  (yas-also-auto-indent-first-line t)  ; Отступ первой строки сниппета
+  (yas-also-indent-empty-lines t)
+  (yas-snippet-revival nil)  ; Установка этого в t вызывает проблемы с отменой
+  (yas-wrap-around-region nil) ; Не оборачивать область при расширении сниппетов
+  ;; (yas-triggers-in-field nil)  ; Отключить вложенное расширение сниппетов
+  ;; (yas-indent-line 'fixed) ; Не делать автоматический отступ содержимого сниппета
+  ;; (yas-prompt-functions '(yas-no-prompt))  ; Без запроса для выбора сниппета
+
+  :init
+  ;; Подавление подробных сообщений
+  (setq yas-verbosity 0)
+
+  :config
+  (yas-global-mode 1))
+
+;; Настройка серверов Language Server Protocol (LSP) с использованием Eglot.
+(use-package eglot
+  :ensure nil
+  :commands (eglot-ensure
+             eglot-rename
+             eglot-format-buffer))
+;
+;; Настройка для программирования на Julia
+(use-package julia-mode
+    :ensure t
+    :mode "\\.jl\\'"
+    :interpreter ("julia" . julia-mode)
+    :init
+    (setenv "JULIA_NUM_THREADS" "8")
+    :config
+    (add-hook 'julia-mode-hook 'eglot-jl-init)
+    (add-hook 'julia-mode-hook (lambda () (setq eglot-connect-timeout 120)))
+    (add-hook 'julia-mode-hook (lambda () (setq eglot-autoshutdown t)))
+    (add-hook 'julia-mode-hook 'julia-repl-mode)
+    ;;(add-hook 'julia-mode-hook 'company-mode) ;; Будем использовать дополнение через Corfu
+    (add-hook 'julia-mode-hook #'yas-minor-mode)
+    (add-hook 'julia-mode-hook (lambda () (setq julia-repl-set-terminal-backend 'vterm))));
 ;;
 ;;emacs --init-directory ~/.config/emacs/
 ;;
